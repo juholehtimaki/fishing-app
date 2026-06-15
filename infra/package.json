@@ -10,7 +10,7 @@
 		"cdk": "cdk"
 	},
 	"devDependencies": {
-		"aws-cdk": "2.1118.2",
+		"aws-cdk": "2.1126.0",
 		"ts-node": "^10.9.2"
 	},
 	"dependencies": {

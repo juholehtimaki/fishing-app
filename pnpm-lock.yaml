@@ -98,8 +98,8 @@ importers:
         version: 17.4.2
     devDependencies:
       aws-cdk:
-        specifier: 2.1118.2
-        version: 2.1118.2
+        specifier: 2.1126.0
+        version: 2.1126.0
       ts-node:
         specifier: ^10.9.2
         version: 10.9.2(@types/node@24.13.2)(typescript@6.0.3)
@@ -1848,8 +1848,8 @@ packages:
       - yaml
       - mime-types
 
-  aws-cdk@2.1118.2:
-    resolution: {integrity: sha512-jHuShSx0JI14enDz2Hk2Qe0LYTDPzLyF2nBhWCvoXyRCpz31sI3XsCh4KO5ZXKfw9ET0bHvDTVnMZQPBpswg8A==}
+  aws-cdk@2.1126.0:
+    resolution: {integrity: sha512-uNoocb3vCPiAT3j9+SwL6pn/VVggHWBsgC2XpxyhNvYQYt6cE9BM/149GWwtdcwnLrPjnwW1+CV/5nSSh5dV+w==}
     engines: {node: '>= 18.0.0'}
     hasBin: true
 
@@ -5125,7 +5125,7 @@ snapshots:
       '@aws-cdk/cloud-assembly-schema': 54.2.0
       constructs: 10.6.0
 
-  aws-cdk@2.1118.2: {}
+  aws-cdk@2.1126.0: {}
 
   balanced-match@4.0.4: {}
 
