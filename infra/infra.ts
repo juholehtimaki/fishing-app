@@ -15,17 +15,21 @@ if (!DOMAIN_NAME || !HOSTED_ZONE_NAME) {
 
 const app = new cdk.App();
 
-const certificateStack = new CertificateStack(app, "CertificateStack", {
-	domainName: DOMAIN_NAME,
-	hostedZoneName: HOSTED_ZONE_NAME,
-	env: {
-		account: process.env.CDK_DEFAULT_ACCOUNT,
-		region: "us-east-1",
+const certificateStack = new CertificateStack(
+	app,
+	"FishingMapCertificateStack",
+	{
+		domainName: DOMAIN_NAME,
+		hostedZoneName: HOSTED_ZONE_NAME,
+		env: {
+			account: process.env.CDK_DEFAULT_ACCOUNT,
+			region: "us-east-1",
+		},
+		crossRegionReferences: true,
 	},
-	crossRegionReferences: true,
-});
+);
 
-new WebsiteStack(app, "WebsiteStack", {
+new WebsiteStack(app, "FishingMapWebsiteStack", {
 	domainName: DOMAIN_NAME,
 	hostedZoneName: HOSTED_ZONE_NAME,
 	certificate: certificateStack.certificate,
