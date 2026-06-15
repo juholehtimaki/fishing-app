@@ -4,16 +4,19 @@ export type GeolocationPosition = {
 	latitude: number;
 	longitude: number;
 	accuracy: number;
+	speed: number | null;
 	timestamp: number;
 };
 
 type GeolocationState = {
 	position: GeolocationPosition | null;
 	tracking: boolean;
+	showSpeed: boolean;
 	error: GeolocationPositionError | null;
 
 	setPosition: (position: GeolocationPosition) => void;
 	setTracking: (tracking: boolean) => void;
+	setShowSpeed: (showSpeed: boolean) => void;
 	setError: (error: GeolocationPositionError | null) => void;
 	reset: () => void;
 };
@@ -21,10 +24,12 @@ type GeolocationState = {
 export const useGeolocationStore = create<GeolocationState>((set) => ({
 	position: null,
 	tracking: false,
+	showSpeed: false,
 	error: null,
 
 	setPosition: (position) => set({ position, error: null }),
 	setTracking: (tracking) => set({ tracking }),
+	setShowSpeed: (showSpeed) => set({ showSpeed }),
 	setError: (error) => set({ error }),
 	reset: () => set({ position: null, tracking: false, error: null }),
 }));

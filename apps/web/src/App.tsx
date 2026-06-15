@@ -2,6 +2,7 @@ import { useState } from "react";
 import { FishingMap, WMS_LAYERS } from "./components/map/FishingMap";
 import { LayerToggle } from "./components/map/LayerToggle";
 import { LocationButton } from "./components/map/LocationButton";
+import { SpeedDisplay } from "./components/map/SpeedDisplay";
 import { useGeolocation } from "./hooks/use-geolocation";
 
 export const App = () => {
@@ -27,6 +28,7 @@ export const App = () => {
 				onToggle={handleToggle}
 			/>
 			<LocationButton onStart={startTracking} onStop={stopTracking} />
+			<SpeedDisplay />
 		</div>
 	);
 };
