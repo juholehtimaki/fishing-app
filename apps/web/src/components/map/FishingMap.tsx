@@ -15,6 +15,7 @@ import View from "ol/View";
 import proj4 from "proj4";
 import { useEffect, useRef } from "react";
 import { useGeolocationStore } from "../../stores/geolocation-store";
+import { useMapStore } from "../../stores/map-store";
 
 // Register EPSG:3067 (ETRS-TM35FIN) projection
 proj4.defs(
@@ -32,37 +33,7 @@ const resolutions = [
 	8192, 4096, 2048, 1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1, 0.5, 0.25,
 ];
 
-export type WmsLayerConfig = {
-	id: string;
-	label: string;
-	layer: string;
-	style: string;
-	visible: boolean;
-};
-
-export const WMS_LAYERS: WmsLayerConfig[] = [
-	{
-		id: "depth-areas",
-		label: "Depth Areas",
-		layer: "DepthArea_A",
-		style: "syvyysalue_a",
-		visible: true,
-	},
-	{
-		id: "depth-contours",
-		label: "Depth Contours",
-		layer: "DepthContour_L",
-		style: "syvyyskayra",
-		visible: true,
-	},
-	{
-		id: "soundings",
-		label: "Soundings",
-		layer: "Sounding_P",
-		style: "Syvyyspiste_point",
-		visible: true,
-	},
-];
+import { WMS_LAYERS } from "./wms-layers";
 
 const TRAFICOM_WMS_URL =
 	"https://julkinen.traficom.fi/inspirepalvelu/rajoitettu/wms";
@@ -111,17 +82,14 @@ function calculateHeadingEndpoint(
 	];
 }
 
-type FishingMapProps = {
-	layerVisibility: Record<string, boolean>;
-};
-
-export const FishingMap = ({ layerVisibility }: FishingMapProps) => {
+export const FishingMap = () => {
 	const mapRef = useRef<HTMLDivElement>(null);
 	const mapInstanceRef = useRef<OlMap | null>(null);
 	const wmsLayersRef = useRef<Record<string, TileLayer>>({});
 	const locationOverlayRef = useRef<Overlay | null>(null);
 	const headingFeatureRef = useRef<Feature<LineString>>(new Feature());
 
+	const layerVisibility = useMapStore((s) => s.layerVisibility);
 	const position = useGeolocationStore((s) => s.position);
 	const showHeading = useGeolocationStore((s) => s.showHeading);
 	const followLocation = useGeolocationStore((s) => s.followLocation);

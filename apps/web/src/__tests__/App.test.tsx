@@ -51,9 +51,14 @@ describe("App", () => {
 	it("renders all layer checkboxes as checked by default", () => {
 		render(<App />);
 		openMenu();
-		const checkboxes = screen.getAllByRole("checkbox");
-		expect(checkboxes).toHaveLength(3);
-		for (const checkbox of checkboxes) {
+		const layerCheckboxes = ["Depth Areas", "Depth Contours", "Soundings"].map(
+			(label) => {
+				const el = screen.getByLabelText(label);
+				return el;
+			},
+		);
+		expect(layerCheckboxes).toHaveLength(3);
+		for (const checkbox of layerCheckboxes) {
 			expect(checkbox).toBeChecked();
 		}
 	});
