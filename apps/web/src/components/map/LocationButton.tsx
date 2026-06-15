@@ -13,7 +13,10 @@ export const LocationButton = ({ onStart, onStop }: LocationButtonProps) => {
 	const error = useGeolocationStore((s) => s.error);
 
 	return (
-		<div className="absolute bottom-6 right-4 z-10 flex flex-col items-end gap-2">
+		<div
+			className="absolute right-4 z-10 flex flex-col items-end gap-2"
+			style={{ bottom: "calc(1.5rem + env(safe-area-inset-bottom, 0px))" }}
+		>
 			{tracking && (
 				<button
 					type="button"
