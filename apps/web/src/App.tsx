@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { FishingMap, WMS_LAYERS } from "./components/map/FishingMap";
-import { LayerToggle } from "./components/map/LayerToggle";
-import { LocationButton } from "./components/map/LocationButton";
+import { MapMenu } from "./components/map/MapMenu";
 import { SpeedDisplay } from "./components/map/SpeedDisplay";
 import { useGeolocation } from "./hooks/use-geolocation";
 
@@ -22,12 +21,13 @@ export const App = () => {
 	return (
 		<div className="relative h-screen w-screen">
 			<FishingMap layerVisibility={layerVisibility} />
-			<LayerToggle
+			<MapMenu
 				layers={WMS_LAYERS}
-				visibility={layerVisibility}
-				onToggle={handleToggle}
+				layerVisibility={layerVisibility}
+				onLayerToggle={handleToggle}
+				onStartTracking={startTracking}
+				onStopTracking={stopTracking}
 			/>
-			<LocationButton onStart={startTracking} onStop={stopTracking} />
 			<SpeedDisplay />
 		</div>
 	);

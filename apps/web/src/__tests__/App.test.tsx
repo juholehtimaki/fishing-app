@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { App } from "../App";
 
@@ -29,14 +29,19 @@ vi.mock("../components/map/FishingMap", () => ({
 	],
 }));
 
+const openMenu = () => {
+	fireEvent.click(screen.getByTitle("Menu"));
+};
+
 describe("App", () => {
 	it("renders the map", () => {
 		render(<App />);
 		expect(screen.getByTestId("fishing-map")).toBeInTheDocument();
 	});
 
-	it("renders layer toggle controls", () => {
+	it("renders layer toggle controls after opening menu", () => {
 		render(<App />);
+		openMenu();
 		expect(screen.getByText("Layers")).toBeInTheDocument();
 		expect(screen.getByText("Depth Areas")).toBeInTheDocument();
 		expect(screen.getByText("Depth Contours")).toBeInTheDocument();
@@ -45,6 +50,7 @@ describe("App", () => {
 
 	it("renders all layer checkboxes as checked by default", () => {
 		render(<App />);
+		openMenu();
 		const checkboxes = screen.getAllByRole("checkbox");
 		expect(checkboxes).toHaveLength(3);
 		for (const checkbox of checkboxes) {

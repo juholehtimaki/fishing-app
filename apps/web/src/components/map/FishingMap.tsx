@@ -123,6 +123,8 @@ export const FishingMap = ({ layerVisibility }: FishingMapProps) => {
 	const headingFeatureRef = useRef<Feature<LineString>>(new Feature());
 
 	const position = useGeolocationStore((s) => s.position);
+	const showHeading = useGeolocationStore((s) => s.showHeading);
+	const followLocation = useGeolocationStore((s) => s.followLocation);
 
 	useEffect(() => {
 		if (!mapRef.current || mapInstanceRef.current) return;
@@ -168,6 +170,7 @@ export const FishingMap = ({ layerVisibility }: FishingMapProps) => {
 			target: mapRef.current,
 			layers: [baseLayer, ...wmsLayers, headingLayer],
 			overlays: [locationOverlay],
+			controls: [],
 			view: new View({
 				projection: "EPSG:3067",
 				center: [324000, 6822000],
@@ -207,7 +210,14 @@ export const FishingMap = ({ layerVisibility }: FishingMapProps) => {
 		);
 		overlay.setPosition(coords);
 
-		if (position.heading != null) {
+		if (followLocation) {
+			mapInstanceRef.current?.getView().animate({
+				center: coords,
+				duration: 300,
+			});
+		}
+
+		if (showHeading && position.heading != null) {
 			const speed = position.speed ?? 0;
 			const distance = Math.max(
 				speed * PREDICTION_SECONDS,
@@ -222,7 +232,7 @@ export const FishingMap = ({ layerVisibility }: FishingMapProps) => {
 		} else {
 			headingFeatureRef.current.setGeometry(undefined);
 		}
-	}, [position]);
+	}, [position, showHeading, followLocation]);
 
 	return <div ref={mapRef} className="h-full w-full" />;
 };
