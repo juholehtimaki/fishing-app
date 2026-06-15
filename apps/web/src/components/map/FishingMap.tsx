@@ -1,13 +1,15 @@
 import "ol/ol.css";
 import TileLayer from "ol/layer/Tile";
 import OlMap from "ol/Map";
-import { get as getProjection } from "ol/proj";
+import Overlay from "ol/Overlay";
+import { get as getProjection, transform } from "ol/proj";
 import { register } from "ol/proj/proj4";
 import OSM from "ol/source/OSM";
 import TileWMS from "ol/source/TileWMS";
 import View from "ol/View";
 import proj4 from "proj4";
 import { useEffect, useRef } from "react";
+import { useGeolocationStore } from "../../stores/geolocation-store";
 
 // Register EPSG:3067 (ETRS-TM35FIN) projection
 proj4.defs(
@@ -60,6 +62,21 @@ export const WMS_LAYERS: WmsLayerConfig[] = [
 const TRAFICOM_WMS_URL =
 	"https://julkinen.traficom.fi/inspirepalvelu/rajoitettu/wms";
 
+function createLocationMarkerElement(): HTMLDivElement {
+	const container = document.createElement("div");
+	container.className = "location-marker";
+
+	const pulse = document.createElement("div");
+	pulse.className = "location-marker-pulse";
+
+	const dot = document.createElement("div");
+	dot.className = "location-marker-dot";
+
+	container.appendChild(pulse);
+	container.appendChild(dot);
+	return container;
+}
+
 type FishingMapProps = {
 	layerVisibility: Record<string, boolean>;
 };
@@ -68,6 +85,9 @@ export const FishingMap = ({ layerVisibility }: FishingMapProps) => {
 	const mapRef = useRef<HTMLDivElement>(null);
 	const mapInstanceRef = useRef<OlMap | null>(null);
 	const wmsLayersRef = useRef<Record<string, TileLayer>>({});
+	const locationOverlayRef = useRef<Overlay | null>(null);
+
+	const position = useGeolocationStore((s) => s.position);
 
 	useEffect(() => {
 		if (!mapRef.current || mapInstanceRef.current) return;
@@ -95,9 +115,17 @@ export const FishingMap = ({ layerVisibility }: FishingMapProps) => {
 			return layer;
 		});
 
+		const locationOverlay = new Overlay({
+			element: createLocationMarkerElement(),
+			positioning: "center-center",
+			stopEvent: false,
+		});
+		locationOverlayRef.current = locationOverlay;
+
 		const map = new OlMap({
 			target: mapRef.current,
 			layers: [baseLayer, ...wmsLayers],
+			overlays: [locationOverlay],
 			view: new View({
 				projection: "EPSG:3067",
 				center: [324000, 6822000],
@@ -119,6 +147,23 @@ export const FishingMap = ({ layerVisibility }: FishingMapProps) => {
 			layer.setVisible(layerVisibility[id] ?? true);
 		}
 	}, [layerVisibility]);
+
+	useEffect(() => {
+		const overlay = locationOverlayRef.current;
+		if (!overlay) return;
+
+		if (!position) {
+			overlay.setPosition(undefined);
+			return;
+		}
+
+		const coords = transform(
+			[position.longitude, position.latitude],
+			"EPSG:4326",
+			"EPSG:3067",
+		);
+		overlay.setPosition(coords);
+	}, [position]);
 
 	return <div ref={mapRef} className="h-full w-full" />;
 };
