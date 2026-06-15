@@ -1,0 +1,124 @@
+import "ol/ol.css";
+import TileLayer from "ol/layer/Tile";
+import OlMap from "ol/Map";
+import { get as getProjection } from "ol/proj";
+import { register } from "ol/proj/proj4";
+import OSM from "ol/source/OSM";
+import TileWMS from "ol/source/TileWMS";
+import View from "ol/View";
+import proj4 from "proj4";
+import { useEffect, useRef } from "react";
+
+// Register EPSG:3067 (ETRS-TM35FIN) projection
+proj4.defs(
+	"EPSG:3067",
+	"+proj=utm +zone=35 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +type=crs",
+);
+register(proj4);
+
+const projection = getProjection("EPSG:3067");
+if (projection) {
+	projection.setExtent([-548576, 6291456, 1548576, 8388608]);
+}
+
+const resolutions = [
+	8192, 4096, 2048, 1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1, 0.5, 0.25,
+];
+
+export type WmsLayerConfig = {
+	id: string;
+	label: string;
+	layer: string;
+	style: string;
+	visible: boolean;
+};
+
+export const WMS_LAYERS: WmsLayerConfig[] = [
+	{
+		id: "depth-areas",
+		label: "Depth Areas",
+		layer: "DepthArea_A",
+		style: "syvyysalue_a",
+		visible: true,
+	},
+	{
+		id: "depth-contours",
+		label: "Depth Contours",
+		layer: "DepthContour_L",
+		style: "syvyyskayra",
+		visible: true,
+	},
+	{
+		id: "soundings",
+		label: "Soundings",
+		layer: "Sounding_P",
+		style: "Syvyyspiste_point",
+		visible: true,
+	},
+];
+
+const TRAFICOM_WMS_URL =
+	"https://julkinen.traficom.fi/inspirepalvelu/rajoitettu/wms";
+
+type FishingMapProps = {
+	layerVisibility: Record<string, boolean>;
+};
+
+export const FishingMap = ({ layerVisibility }: FishingMapProps) => {
+	const mapRef = useRef<HTMLDivElement>(null);
+	const mapInstanceRef = useRef<OlMap | null>(null);
+	const wmsLayersRef = useRef<Record<string, TileLayer>>({});
+
+	useEffect(() => {
+		if (!mapRef.current || mapInstanceRef.current) return;
+
+		const baseLayer = new TileLayer({
+			source: new OSM(),
+		});
+
+		const wmsLayers = WMS_LAYERS.map((config) => {
+			const layer = new TileLayer({
+				source: new TileWMS({
+					url: TRAFICOM_WMS_URL,
+					params: {
+						LAYERS: config.layer,
+						STYLES: config.style,
+						FORMAT: "image/png",
+						TRANSPARENT: true,
+						VERSION: "1.3.0",
+					},
+					projection: "EPSG:3067",
+				}),
+				visible: config.visible,
+			});
+			wmsLayersRef.current[config.id] = layer;
+			return layer;
+		});
+
+		const map = new OlMap({
+			target: mapRef.current,
+			layers: [baseLayer, ...wmsLayers],
+			view: new View({
+				projection: "EPSG:3067",
+				center: [324000, 6822000],
+				zoom: 12,
+				resolutions,
+			}),
+		});
+
+		mapInstanceRef.current = map;
+
+		return () => {
+			map.setTarget(undefined);
+			mapInstanceRef.current = null;
+		};
+	}, []);
+
+	useEffect(() => {
+		for (const [id, layer] of Object.entries(wmsLayersRef.current)) {
+			layer.setVisible(layerVisibility[id] ?? true);
+		}
+	}, [layerVisibility]);
+
+	return <div ref={mapRef} className="h-full w-full" />;
+};
