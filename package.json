@@ -10,6 +10,7 @@
 		"test:infra": "vitest run --project infra",
 		"build:web": "pnpm --filter web build",
 		"dev:web": "pnpm --filter web dev",
+		"dev:mobile": "pnpm --filter web dev:mobile",
 		"check": "biome check .",
 		"check:fix": "biome check . --write"
 	},
