@@ -38,15 +38,15 @@ import { WMS_LAYERS } from "./wms-layers";
 const TRAFICOM_WMS_URL =
 	"https://julkinen.traficom.fi/inspirepalvelu/rajoitettu/wms";
 
-// Prediction line: show where the boat will be in 30 seconds
-const PREDICTION_SECONDS = 30;
-const MIN_PREDICTION_DISTANCE = 50; // meters, so the line is visible even at low speed
+// Prediction line: show where the boat will be in 60 seconds
+const PREDICTION_SECONDS = 60;
+const MIN_PREDICTION_DISTANCE = 100; // meters, so the line is visible even at low speed
 
 const headingLineStyle = new Style({
 	stroke: new Stroke({
 		color: "rgba(37, 99, 235, 0.6)",
-		width: 2.5,
-		lineDash: [8, 6],
+		width: 4,
+		lineDash: [10, 8],
 	}),
 });
 
