@@ -16,6 +16,7 @@ type GeolocationState = {
 	showSpeed: boolean;
 	showHeading: boolean;
 	followLocation: boolean;
+	keepScreenOn: boolean;
 	error: GeolocationPositionError | null;
 
 	setPosition: (position: GeolocationPosition) => void;
@@ -23,6 +24,7 @@ type GeolocationState = {
 	setShowSpeed: (showSpeed: boolean) => void;
 	setShowHeading: (showHeading: boolean) => void;
 	setFollowLocation: (followLocation: boolean) => void;
+	setKeepScreenOn: (keepScreenOn: boolean) => void;
 	setError: (error: GeolocationPositionError | null) => void;
 	reset: () => void;
 };
@@ -35,6 +37,7 @@ export const useGeolocationStore = create<GeolocationState>()(
 			showSpeed: false,
 			showHeading: false,
 			followLocation: false,
+			keepScreenOn: false,
 			error: null,
 
 			setPosition: (position) => set({ position, error: null }),
@@ -42,6 +45,7 @@ export const useGeolocationStore = create<GeolocationState>()(
 			setShowSpeed: (showSpeed) => set({ showSpeed }),
 			setShowHeading: (showHeading) => set({ showHeading }),
 			setFollowLocation: (followLocation) => set({ followLocation }),
+			setKeepScreenOn: (keepScreenOn) => set({ keepScreenOn }),
 			setError: (error) => set({ error }),
 			reset: () => set({ position: null, tracking: false, error: null }),
 		}),
@@ -52,6 +56,7 @@ export const useGeolocationStore = create<GeolocationState>()(
 				showSpeed: state.showSpeed,
 				showHeading: state.showHeading,
 				followLocation: state.followLocation,
+				keepScreenOn: state.keepScreenOn,
 			}),
 		},
 	),

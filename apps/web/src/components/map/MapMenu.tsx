@@ -6,6 +6,7 @@ import {
 	Locate,
 	LocateOff,
 	Menu,
+	Monitor,
 	Square,
 	Trash2,
 	X,
@@ -31,6 +32,8 @@ export const MapMenu = ({ onStartTracking, onStopTracking }: MapMenuProps) => {
 	const followLocation = useGeolocationStore((s) => s.followLocation);
 	const setFollowLocation = useGeolocationStore((s) => s.setFollowLocation);
 	const error = useGeolocationStore((s) => s.error);
+	const keepScreenOn = useGeolocationStore((s) => s.keepScreenOn);
+	const setKeepScreenOn = useGeolocationStore((s) => s.setKeepScreenOn);
 	const layerVisibility = useMapStore((s) => s.layerVisibility);
 	const toggleLayer = useMapStore((s) => s.toggleLayer);
 	const recording = usePathStore((s) => s.recording);
@@ -105,6 +108,17 @@ export const MapMenu = ({ onStartTracking, onStopTracking }: MapMenuProps) => {
 								/>
 								<Crosshair className="h-4 w-4" />
 								Follow location
+							</label>
+
+							<label className="flex cursor-pointer items-center gap-2 px-2.5 text-sm">
+								<input
+									type="checkbox"
+									checked={keepScreenOn}
+									onChange={() => setKeepScreenOn(!keepScreenOn)}
+									className="accent-primary"
+								/>
+								<Monitor className="h-4 w-4" />
+								Keep screen on
 							</label>
 
 							{error && (
