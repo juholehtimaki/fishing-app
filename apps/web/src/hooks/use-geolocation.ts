@@ -45,7 +45,7 @@ export const useGeolocation = () => {
 					longitude: pos.coords.longitude,
 					accuracy: pos.coords.accuracy,
 					speed: pos.coords.speed,
-					heading: pos.coords.heading,
+					heading: 45,
 					timestamp: pos.timestamp,
 				});
 			},
