@@ -1,30 +1,31 @@
 import { useCallback, useEffect, useRef } from "react";
 import { useGeolocationStore } from "../stores/geolocation-store";
 
-// TODO: Remove mock - restore GEOLOCATION_OPTIONS
-// const GEOLOCATION_OPTIONS: PositionOptions = {
-// 	enableHighAccuracy: true,
-// 	maximumAge: 10_000,
-// 	timeout: 30_000,
-// };
-
-// TODO: Remove mock coordinates
-const MOCK_POSITION = {
-	latitude: 61.486977,
-	longitude: 23.67744,
-	accuracy: 10,
-	speed: 4.2,
+const GEOLOCATION_OPTIONS: PositionOptions = {
+	enableHighAccuracy: true,
+	maximumAge: 10_000,
+	timeout: 30_000,
 };
 
 export const useGeolocation = () => {
 	const watchIdRef = useRef<number | null>(null);
-	const { tracking, setPosition, setTracking, reset } = useGeolocationStore();
+	const { tracking, setPosition, setTracking, setError, reset } =
+		useGeolocationStore();
 
 	const startTracking = useCallback(() => {
-		// TODO: Remove mock - use real geolocation
-		setPosition({ ...MOCK_POSITION, timestamp: Date.now() });
+		if (!navigator.geolocation) {
+			setError({
+				code: 2,
+				message: "Geolocation is not supported by this browser",
+				PERMISSION_DENIED: 1,
+				POSITION_UNAVAILABLE: 2,
+				TIMEOUT: 3,
+			});
+			return;
+		}
+
 		setTracking(true);
-	}, [setTracking, setPosition]);
+	}, [setTracking, setError]);
 
 	const stopTracking = useCallback(() => {
 		if (watchIdRef.current !== null) {
@@ -37,22 +38,22 @@ export const useGeolocation = () => {
 	useEffect(() => {
 		if (!tracking) return;
 
-		// TODO: Remove mock - uncomment real watchPosition
-		// watchIdRef.current = navigator.geolocation.watchPosition(
-		// 	(pos) => {
-		// 		setPosition({
-		// 			latitude: pos.coords.latitude,
-		// 			longitude: pos.coords.longitude,
-		// 			accuracy: pos.coords.accuracy,
-		// 			speed: pos.coords.speed,
-		// 			timestamp: pos.timestamp,
-		// 		});
-		// 	},
-		// 	(err) => {
-		// 		setError(err);
-		// 	},
-		// 	GEOLOCATION_OPTIONS,
-		// );
+		watchIdRef.current = navigator.geolocation.watchPosition(
+			(pos) => {
+				setPosition({
+					latitude: pos.coords.latitude,
+					longitude: pos.coords.longitude,
+					accuracy: pos.coords.accuracy,
+					speed: pos.coords.speed,
+					heading: pos.coords.heading,
+					timestamp: pos.timestamp,
+				});
+			},
+			(err) => {
+				setError(err);
+			},
+			GEOLOCATION_OPTIONS,
+		);
 
 		return () => {
 			if (watchIdRef.current !== null) {
@@ -60,7 +61,7 @@ export const useGeolocation = () => {
 				watchIdRef.current = null;
 			}
 		};
-	}, [tracking]);
+	}, [tracking, setPosition, setError]);
 
 	return { startTracking, stopTracking };
 };

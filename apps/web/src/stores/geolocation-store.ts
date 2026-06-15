@@ -5,6 +5,7 @@ export type GeolocationPosition = {
 	longitude: number;
 	accuracy: number;
 	speed: number | null;
+	heading: number | null;
 	timestamp: number;
 };
 

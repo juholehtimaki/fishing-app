@@ -1,11 +1,16 @@
 import "ol/ol.css";
+import Feature from "ol/Feature";
+import LineString from "ol/geom/LineString";
 import TileLayer from "ol/layer/Tile";
+import VectorLayer from "ol/layer/Vector";
 import OlMap from "ol/Map";
 import Overlay from "ol/Overlay";
 import { get as getProjection, transform } from "ol/proj";
 import { register } from "ol/proj/proj4";
 import OSM from "ol/source/OSM";
 import TileWMS from "ol/source/TileWMS";
+import VectorSource from "ol/source/Vector";
+import { Stroke, Style } from "ol/style";
 import View from "ol/View";
 import proj4 from "proj4";
 import { useEffect, useRef } from "react";
@@ -62,6 +67,18 @@ export const WMS_LAYERS: WmsLayerConfig[] = [
 const TRAFICOM_WMS_URL =
 	"https://julkinen.traficom.fi/inspirepalvelu/rajoitettu/wms";
 
+// Prediction line: show where the boat will be in 30 seconds
+const PREDICTION_SECONDS = 30;
+const MIN_PREDICTION_DISTANCE = 50; // meters, so the line is visible even at low speed
+
+const headingLineStyle = new Style({
+	stroke: new Stroke({
+		color: "rgba(37, 99, 235, 0.6)",
+		width: 2.5,
+		lineDash: [8, 6],
+	}),
+});
+
 function createLocationMarkerElement(): HTMLDivElement {
 	const container = document.createElement("div");
 	container.className = "location-marker";
@@ -77,6 +94,23 @@ function createLocationMarkerElement(): HTMLDivElement {
 	return container;
 }
 
+/**
+ * Calculate the endpoint of the heading prediction line.
+ * Heading is in degrees (0 = north, clockwise).
+ * In EPSG:3067 (UTM): x = easting, y = northing.
+ */
+function calculateHeadingEndpoint(
+	origin: number[],
+	headingDeg: number,
+	distance: number,
+): number[] {
+	const headingRad = (headingDeg * Math.PI) / 180;
+	return [
+		origin[0] + distance * Math.sin(headingRad),
+		origin[1] + distance * Math.cos(headingRad),
+	];
+}
+
 type FishingMapProps = {
 	layerVisibility: Record<string, boolean>;
 };
@@ -86,6 +120,7 @@ export const FishingMap = ({ layerVisibility }: FishingMapProps) => {
 	const mapInstanceRef = useRef<OlMap | null>(null);
 	const wmsLayersRef = useRef<Record<string, TileLayer>>({});
 	const locationOverlayRef = useRef<Overlay | null>(null);
+	const headingFeatureRef = useRef<Feature<LineString>>(new Feature());
 
 	const position = useGeolocationStore((s) => s.position);
 
@@ -115,6 +150,13 @@ export const FishingMap = ({ layerVisibility }: FishingMapProps) => {
 			return layer;
 		});
 
+		const headingLayer = new VectorLayer({
+			source: new VectorSource({
+				features: [headingFeatureRef.current],
+			}),
+			style: headingLineStyle,
+		});
+
 		const locationOverlay = new Overlay({
 			element: createLocationMarkerElement(),
 			positioning: "center-center",
@@ -124,7 +166,7 @@ export const FishingMap = ({ layerVisibility }: FishingMapProps) => {
 
 		const map = new OlMap({
 			target: mapRef.current,
-			layers: [baseLayer, ...wmsLayers],
+			layers: [baseLayer, ...wmsLayers, headingLayer],
 			overlays: [locationOverlay],
 			view: new View({
 				projection: "EPSG:3067",
@@ -154,6 +196,7 @@ export const FishingMap = ({ layerVisibility }: FishingMapProps) => {
 
 		if (!position) {
 			overlay.setPosition(undefined);
+			headingFeatureRef.current.setGeometry(undefined);
 			return;
 		}
 
@@ -163,6 +206,22 @@ export const FishingMap = ({ layerVisibility }: FishingMapProps) => {
 			"EPSG:3067",
 		);
 		overlay.setPosition(coords);
+
+		if (position.heading != null) {
+			const speed = position.speed ?? 0;
+			const distance = Math.max(
+				speed * PREDICTION_SECONDS,
+				MIN_PREDICTION_DISTANCE,
+			);
+			const endpoint = calculateHeadingEndpoint(
+				coords,
+				position.heading,
+				distance,
+			);
+			headingFeatureRef.current.setGeometry(new LineString([coords, endpoint]));
+		} else {
+			headingFeatureRef.current.setGeometry(undefined);
+		}
 	}, [position]);
 
 	return <div ref={mapRef} className="h-full w-full" />;
