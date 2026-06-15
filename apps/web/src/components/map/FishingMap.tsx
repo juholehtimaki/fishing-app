@@ -16,6 +16,7 @@ import proj4 from "proj4";
 import { useEffect, useRef } from "react";
 import { useGeolocationStore } from "../../stores/geolocation-store";
 import { useMapStore } from "../../stores/map-store";
+import { usePathStore } from "../../stores/path-store";
 
 // Register EPSG:3067 (ETRS-TM35FIN) projection
 proj4.defs(
@@ -47,6 +48,13 @@ const headingLineStyle = new Style({
 		color: "rgba(37, 99, 235, 0.6)",
 		width: 4,
 		lineDash: [10, 8],
+	}),
+});
+
+const pathLineStyle = new Style({
+	stroke: new Stroke({
+		color: "rgba(220, 38, 38, 0.8)",
+		width: 3,
 	}),
 });
 
@@ -88,11 +96,13 @@ export const FishingMap = () => {
 	const wmsLayersRef = useRef<Record<string, TileLayer>>({});
 	const locationOverlayRef = useRef<Overlay | null>(null);
 	const headingFeatureRef = useRef<Feature<LineString>>(new Feature());
+	const pathFeatureRef = useRef<Feature<LineString>>(new Feature());
 
 	const layerVisibility = useMapStore((s) => s.layerVisibility);
 	const position = useGeolocationStore((s) => s.position);
 	const showHeading = useGeolocationStore((s) => s.showHeading);
 	const followLocation = useGeolocationStore((s) => s.followLocation);
+	const pathPoints = usePathStore((s) => s.points);
 
 	useEffect(() => {
 		if (!mapRef.current || mapInstanceRef.current) return;
@@ -127,6 +137,13 @@ export const FishingMap = () => {
 			style: headingLineStyle,
 		});
 
+		const pathLayer = new VectorLayer({
+			source: new VectorSource({
+				features: [pathFeatureRef.current],
+			}),
+			style: pathLineStyle,
+		});
+
 		const locationOverlay = new Overlay({
 			element: createLocationMarkerElement(),
 			positioning: "center-center",
@@ -136,7 +153,7 @@ export const FishingMap = () => {
 
 		const map = new OlMap({
 			target: mapRef.current,
-			layers: [baseLayer, ...wmsLayers, headingLayer],
+			layers: [baseLayer, ...wmsLayers, pathLayer, headingLayer],
 			overlays: [locationOverlay],
 			controls: [],
 			view: new View({
@@ -160,6 +177,17 @@ export const FishingMap = () => {
 			layer.setVisible(layerVisibility[id] ?? true);
 		}
 	}, [layerVisibility]);
+
+	useEffect(() => {
+		if (pathPoints.length < 2) {
+			pathFeatureRef.current.setGeometry(undefined);
+			return;
+		}
+		const coords = pathPoints.map((p) =>
+			transform([p.longitude, p.latitude], "EPSG:4326", "EPSG:3067"),
+		);
+		pathFeatureRef.current.setGeometry(new LineString(coords));
+	}, [pathPoints]);
 
 	useEffect(() => {
 		const overlay = locationOverlayRef.current;

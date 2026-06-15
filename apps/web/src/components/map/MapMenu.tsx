@@ -1,15 +1,19 @@
 import {
+	Circle,
 	Compass,
 	Crosshair,
 	Gauge,
 	Locate,
 	LocateOff,
 	Menu,
+	Square,
+	Trash2,
 	X,
 } from "lucide-react";
 import { useState } from "react";
 import { useGeolocationStore } from "../../stores/geolocation-store";
 import { useMapStore } from "../../stores/map-store";
+import { usePathStore } from "../../stores/path-store";
 import { WMS_LAYERS } from "./wms-layers";
 
 type MapMenuProps = {
@@ -29,6 +33,11 @@ export const MapMenu = ({ onStartTracking, onStopTracking }: MapMenuProps) => {
 	const error = useGeolocationStore((s) => s.error);
 	const layerVisibility = useMapStore((s) => s.layerVisibility);
 	const toggleLayer = useMapStore((s) => s.toggleLayer);
+	const recording = usePathStore((s) => s.recording);
+	const pathPoints = usePathStore((s) => s.points);
+	const startRecording = usePathStore((s) => s.startRecording);
+	const stopRecording = usePathStore((s) => s.stopRecording);
+	const clearPath = usePathStore((s) => s.clear);
 
 	return (
 		<>
@@ -103,6 +112,41 @@ export const MapMenu = ({ onStartTracking, onStopTracking }: MapMenuProps) => {
 									{error.message}
 								</p>
 							)}
+						</div>
+					</div>
+
+					<div className="mb-4 border-t border-foreground/10 pt-3">
+						<h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+							Recording
+						</h3>
+						<div className="flex flex-col gap-1.5">
+							<button
+								type="button"
+								onClick={recording ? stopRecording : startRecording}
+								className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors ${
+									recording
+										? "bg-destructive text-destructive-foreground"
+										: "hover:bg-accent"
+								}`}
+							>
+								{recording ? (
+									<Square className="h-4 w-4" />
+								) : (
+									<Circle className="h-4 w-4" />
+								)}
+								{recording ? "Stop recording" : "Record path"}
+							</button>
+
+							<button
+								type="button"
+								onClick={clearPath}
+								disabled={pathPoints.length === 0}
+								className="flex items-center gap-2 rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors hover:bg-accent disabled:opacity-40 disabled:pointer-events-none"
+							>
+								<Trash2 className="h-4 w-4" />
+								Clear path
+								{pathPoints.length > 0 ? ` (${pathPoints.length} pts)` : ""}
+							</button>
 						</div>
 					</div>
 

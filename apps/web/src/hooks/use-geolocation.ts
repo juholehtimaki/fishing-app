@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef } from "react";
 import { useGeolocationStore } from "../stores/geolocation-store";
+import { usePathStore } from "../stores/path-store";
 
 const GEOLOCATION_OPTIONS: PositionOptions = {
 	enableHighAccuracy: true,
@@ -48,6 +49,15 @@ export const useGeolocation = () => {
 					heading: pos.coords.heading,
 					timestamp: pos.timestamp,
 				});
+
+				const { recording, addPoint } = usePathStore.getState();
+				if (recording) {
+					addPoint({
+						latitude: pos.coords.latitude,
+						longitude: pos.coords.longitude,
+						timestamp: pos.timestamp,
+					});
+				}
 			},
 			(err) => {
 				setError(err);
