@@ -8,39 +8,30 @@ const GEOLOCATION_OPTIONS: PositionOptions = {
 	timeout: 30_000,
 };
 
+/** If no position update arrives within this window, restart the watch. */
+const STALE_THRESHOLD_MS = 15_000;
+const WATCHDOG_INTERVAL_MS = 5_000;
+
 export const useGeolocation = () => {
 	const watchIdRef = useRef<number | null>(null);
+	const lastUpdateRef = useRef<number>(0);
 	const { tracking, setPosition, setTracking, setError, reset } =
 		useGeolocationStore();
 
-	const startTracking = useCallback(() => {
-		if (!navigator.geolocation) {
-			setError({
-				code: 2,
-				message: "Geolocation is not supported by this browser",
-				PERMISSION_DENIED: 1,
-				POSITION_UNAVAILABLE: 2,
-				TIMEOUT: 3,
-			});
-			return;
-		}
-
-		setTracking(true);
-	}, [setTracking, setError]);
-
-	const stopTracking = useCallback(() => {
+	const clearWatch = useCallback(() => {
 		if (watchIdRef.current !== null) {
 			navigator.geolocation.clearWatch(watchIdRef.current);
 			watchIdRef.current = null;
 		}
-		reset();
-	}, [reset]);
+	}, []);
 
-	useEffect(() => {
-		if (!tracking) return;
+	const startWatch = useCallback(() => {
+		clearWatch();
+		lastUpdateRef.current = Date.now();
 
 		watchIdRef.current = navigator.geolocation.watchPosition(
 			(pos) => {
+				lastUpdateRef.current = Date.now();
 				setPosition({
 					latitude: pos.coords.latitude,
 					longitude: pos.coords.longitude,
@@ -64,14 +55,45 @@ export const useGeolocation = () => {
 			},
 			GEOLOCATION_OPTIONS,
 		);
+	}, [clearWatch, setPosition, setError]);
+
+	const startTracking = useCallback(() => {
+		if (!navigator.geolocation) {
+			setError({
+				code: 2,
+				message: "Geolocation is not supported by this browser",
+				PERMISSION_DENIED: 1,
+				POSITION_UNAVAILABLE: 2,
+				TIMEOUT: 3,
+			});
+			return;
+		}
+
+		setTracking(true);
+	}, [setTracking, setError]);
+
+	const stopTracking = useCallback(() => {
+		clearWatch();
+		reset();
+	}, [clearWatch, reset]);
+
+	useEffect(() => {
+		if (!tracking) return;
+
+		startWatch();
+
+		// Watchdog: restart the watch if updates stop arriving
+		const watchdogId = setInterval(() => {
+			if (Date.now() - lastUpdateRef.current > STALE_THRESHOLD_MS) {
+				startWatch();
+			}
+		}, WATCHDOG_INTERVAL_MS);
 
 		return () => {
-			if (watchIdRef.current !== null) {
-				navigator.geolocation.clearWatch(watchIdRef.current);
-				watchIdRef.current = null;
-			}
+			clearWatch();
+			clearInterval(watchdogId);
 		};
-	}, [tracking, setPosition, setError]);
+	}, [tracking, startWatch, clearWatch]);
 
 	return { startTracking, stopTracking };
 };
